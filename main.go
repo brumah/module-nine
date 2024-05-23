@@ -1,19 +1,40 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Helloworld")
+// Define a counter metric
+var (
+    httpRequestsTotal = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "http_requests_total",
+            Help: "Total number of HTTP requests",
+        },
+        []string{"method", "endpoint"},
+    )
+)
+
+func init() {
+    // Register the metric
+    prometheus.MustRegister(httpRequestsTotal)
 }
 
 func main() {
-	http.HandleFunc("/", handler)
+    // Handle the root endpoint
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        httpRequestsTotal.With(prometheus.Labels{"method": r.Method, "endpoint": "/"}).Inc()
+        w.Write([]byte("Hello, World!"))
+    })
 
-	port := ":8080"
-	fmt.Printf("Server is running on port %s\n", port)
-	log.Fatal(http.ListenAndServe(port, nil))
+    // Expose the metrics endpoint
+    http.Handle("/metrics", promhttp.Handler())
+
+    // Start the HTTP server
+    log.Println("Starting server on :8080")
+    log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -14,6 +14,7 @@ sudo docker container run --name grafana -v grafana-data -p 3000:3000 --network 
 
 - terminal 3
 git clone https://github.com/brumah/module-nine
+cd module-nine
 sudo docker build -t module-nine .
 sudo docker run -p 8080:8080 module-nine
 
